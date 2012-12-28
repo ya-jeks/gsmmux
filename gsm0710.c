@@ -100,6 +100,7 @@
 #define UNKNOW_MODEM	0
 #define MC35		1
 #define GENERIC		2
+#define IRZ52IT		3
 // Defines how often the modem is polled when automatic restarting is enabled
 // The value is in seconds
 #define POLLING_INTERVAL 5
