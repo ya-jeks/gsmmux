@@ -1,0 +1,77 @@
+GSM 07.10 Driver Implementation with User Space Serial Ports
+
+Copyright (C) 2003 Tuukka Karvonen <tkarvone@iki.fi>
+
+
+Introduction
+
+  This is an implementation of the GSM 07.10 protocol which makes use of the
+  User Space Serial Ports (USSP). Only a subset of the GSM 07.10
+  basic mode features are implemented so that the driver could be tested
+  with Siemens MC35 module. 
+
+  This work was done as a special assignment in Helsinki University of 
+  Technology and the report of it is included as a pdf document. There
+  are only short instructions for use in this README file. Please refer
+  to the pdf document for more information on the driver.
+
+
+Instructions for Use
+
+  First you need to extract and compile the driver:
+
+	tar -xvzf gsm0710.tar.gz
+	cd gsm0710
+	make
+
+  The driver needs an USSP kernel module. The original USSP module was 
+  modified to inform the daemon about modem signal changes. If you don't 
+  have the USSP kernel module set up or you want to transfer modem signal 
+  changes to the MS, you need to compile and install the USSP driver 
+  included in the package. E.g.:
+
+	su
+	cd ussp
+	make
+	./mkdev.ussp
+	insmod ./ussp.o
+	exit
+
+  Next you should check that your MS is ready for the multiplexer mode. 
+  You can give required terminal settings and AT-commands e.g. with Minicom 
+  serial communication program. In the mux mode characters are transmitted 
+  in 8N1 mode. In addition to that Siemens MC3x/TC3x requires that AT+IPR is 
+  not in auto mode, so you should type AT+IPR=57600, and also use of RTS/CTS 
+  flow control is recommended.
+
+  Then you can start the daemon. First make sure that you have rw-permissions 
+  for the device /dev/ussp_ctl or /dev/misc/ussp_ctl in case of devfs and for 
+  the serial port that the MS is connected to. The driver command syntax is:
+
+	gsm0710 <dev> [channels] [first_ttyU] [max_frame_size]
+
+  where: 
+  - dev is the device (e.g. /dev/ttyS0)
+  - channels is the number of logical channels (defaults to 3)
+  - first_ttyU is the number of first ttyU device 
+               (defaults to 0 i.e. /dev/ttyU0)
+  - max_frame_size is the maximum amount of information octets allowed in 
+                   one frame (defaults to Siemens MC3x/TC3x limit i.e. 97. The 
+                   default value specified in the GSM 07.10 specification 
+                   would be 64 octets.)
+  
+  So if you have connected your Siemens MC3x/TC3x to the first serial port, 
+  you could start the driver with command:
+
+	./gsm0710 /dev/ttyS0
+
+  The driver can be stopped by pressing CTRL-C, which terminates the 
+  multiplexer session.
+
+
+Download
+
+  http://www.iki.fi/tkarvone/
+
+
+

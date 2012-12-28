@@ -1,0 +1,69 @@
+GSM 07.10 Driver Implementation with pseudo-tty's
+
+Copyright (C) 2003 Tuukka Karvonen <tkarvone@iki.fi>
+Modified 2004/2005 by David Jander <david@protonic.nl>
+Development continued in Berlios GSM Multiplexer Daemon project
+
+Introduction
+
+  This driver is based on the work of Tuukka Karvonen, (see
+  README.orig) and has been modified to work with pseudo-tty's
+  instead. This is far from complete. Please refer to README.orig for 
+  more information about the GSM07.10 implementation. The driver is
+  known to work with the following modems:
+
+  - Sony-Ericsson GM29 
+  - Siemens MC35
+  - Siemens MC35i
+  - Siemens MC75
+  - Sony-Ericsson GM47/GM48 (not tested with the most recent version of 
+                             the driver)
+
+Instructions for Use
+
+  ./gsmMuxd [options] <pty1> <pty2> ...
+    <ptyN>              : pty devices (e.g. /dev/ptya0, or /dev/ptmx)
+
+  options:
+    -p <serport>        : Serial port device to connect to [/dev/modem]
+    -f <framsize>       : Maximum frame size [32]
+    -d                  : Debug mode, don't fork
+    -m <modem>          : Modem (mc35, mc75, generic, ...)
+    -b <baudrate>       : MUX mode baudrate (0,9600,14400, ...)
+    -P <PIN-code>       : PIN code to fed to the modem
+    -s <symlink-prefix> : Prefix for the symlinks of slave devices 
+                          (e.g./dev/mux)
+    -w                  : Wait for deamon startup success/failure
+    -h                  : Show this help message
+
+  This daemon divides one serial port into two or more "virtual" serial
+  ports (pseudo TTYs) assuming the modem supports the GSM 07.10
+  multiplexer protocol. This way the first virtual serial port can be
+  used for e.g. GPRS dialup connection with pppd, while the other ports
+  are used for modem AT commands.
+
+  The daemon takes the pseudo TTY master devices to-be-used as
+  parameter. The corresponding pseudo TTY slave devices will become the
+  virtual serial ports.
+
+  On some systems, there is only one master pseudo TTY device, the
+  "/dev/ptmx". In this case, the slave TTYs will be named /dev/pts/0,
+  /dev/pts/1, etc and the names of the virtual serial ports are not
+  static. To solve the problem, the daemon can create symbolic links
+  with static names to the dynamically changing virtual serial port
+  pseudo TTY slave devices.
+
+INSTALLATION
+
+  To make the daemon start at system boot:
+  1. Copy gsmMuxd to /usr/sbin/
+  2. Copy the file "mux.d" to /etc/init.d/. 
+  3. Edit the OPTIONS line of the copied file
+  3. Run chkconfig --add mux.d
+
+  If you have more than one modem you will need to 
+  create a copy of the daemon executable with a different 
+  name and create another init script to /etc/init.d/.
+
+  Note that installation varies on different systems. The steps above
+  should work at least on Red Hat linux distributions.
