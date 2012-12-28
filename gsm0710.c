@@ -478,7 +478,7 @@ int at_command(int fd, char *cmd, int to)
 	wrote = write(fd, cmd, strlen(cmd));
 
 	if(_debug)
-		syslog(LOG_DEBUG, " wrote  %d \n", wrote);
+		syslog(LOG_DEBUG, "Wrote  %s \n", cmd);
 
 	tcdrain(fd);
 	sleep(1);
@@ -1159,7 +1159,7 @@ void signal_treatment(int param)
 }
 
 /**
- * Fuunction to init Modemd Siemes MC35 families
+ * Function to init Modemd Siemes MC35 families
  * Siemens need and special step-by for after get-in MUX state
  */
 int initSiemensMC35()
@@ -1217,6 +1217,52 @@ int initSiemensMC35()
 			syslog(LOG_DEBUG, "ERROR AT+CPIN %d\r\n", __LINE__);
             }
         }
+	if (!at_command(serial_fd, mux_command, 10000))
+	{
+		syslog(LOG_ERR, "MUX mode doesn't function.\n");
+		return -1;
+	}
+	return 0;
+}
+
+int initIRZ52IT()
+{
+	char mux_command[20] = "AT+CMUX=0\r\n";
+	char baud_command[] = "AT+IPR=115200\r\n";
+    unsigned char close_mux[2] = { C_CLD | CR, 1 };
+
+    int baud = indexOfBaud(baudrate);
+    if (baud != 0) {
+        // Setup the speed explicitly, if given
+        sprintf(baud_command, "AT+IPR=%d\r\n", baudrate)
+    }
+    
+    at_command(serial_fd, baud_command, 10000);
+    at_command(serial_fd,"AT\r\n", 10000);
+    at_command(serial_fd,"AT&S0\Q3\r\n", 10000);
+	
+	if (!at_command(serial_fd,"AT\r\n", 10000))
+	{
+		if(_debug)
+			syslog(LOG_DEBUG, "ERROR AT %d\r\n", __LINE__);
+
+        syslog(LOG_INFO, "Modem does not respond to AT commands, trying close MUX mode");
+		write_frame(0, close_mux, 2, UIH);
+        at_command(serial_fd,"AT\r\n", 10000);
+	}
+        if (pin_code > 0 && pin_code < 10000) 
+        {
+            // Some modems, such as webbox, will sometimes hang if SIM code
+            // is given in virtual channel
+            char pin_command[20];
+            sprintf(pin_command, "AT+CPIN=%d\r\n", pin_code);
+            if (!at_command(serial_fd,pin_command, 20000))
+            {
+		if(_debug)
+			syslog(LOG_DEBUG, "ERROR AT+CPIN %d\r\n", __LINE__);
+            }
+        }
+
 	if (!at_command(serial_fd, mux_command, 10000))
 	{
 		syslog(LOG_ERR, "MUX mode doesn't function.\n");
@@ -1310,6 +1356,10 @@ int openDevicesAndMuxMode() {
 	case MC35:
 		//we coould have other models like XP48 TC45/35
 		ret = initSiemensMC35();
+		break;
+	case IRZ52IT:
+		//we coould have other models like XP48 TC45/35
+		ret = initIRZ52IT();
 		break;
 	case GENERIC:
 		ret = initGeneric();
@@ -1408,6 +1458,8 @@ int main(int argc, char *argv[], char *env[])
 					_modem_type = MC35;
 				else if(!strcmp(optarg,"mc75"))
 					_modem_type = MC35;
+				else if(!strcmp(optarg,"irz52it"))
+					_modem_type = IRZ52IT;
 				else if(!strcmp(optarg,"generic"))
 					_modem_type = GENERIC;
 				else _modem_type = UNKNOW_MODEM;
