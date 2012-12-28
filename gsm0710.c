@@ -1239,8 +1239,6 @@ int initIRZ52IT()
     }
     
     at_command(serial_fd, baud_command, 10000);
-    at_command(serial_fd,"AT\r\n", 10000);
-    at_command(serial_fd,"AT&S0\\Q3\r\n", 10000);
 	
 	if (!at_command(serial_fd,"AT\r\n", 10000))
 	{
