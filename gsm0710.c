@@ -1235,7 +1235,7 @@ int initIRZ52IT()
     int baud = indexOfBaud(baudrate);
     if (baud != 0) {
         // Setup the speed explicitly, if given
-        sprintf(baud_command, "AT+IPR=%d\r\n", baudrate)
+        sprintf(baud_command, "AT+IPR=%d\r\n", baudrate);
     }
     
     at_command(serial_fd, baud_command, 10000);
