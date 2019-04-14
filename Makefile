@@ -20,6 +20,12 @@ all: $(TARGET)
 clean:
 	rm -f $(OBJS) $(TARGET)
 
+install:
+	cp $(TARGET) /usr/sbin/
+
+uninstall:
+	rm -f /usr/sbin/$(TARGET)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
