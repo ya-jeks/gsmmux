@@ -26,12 +26,12 @@
 *  - Seriously broke hardware handshaking.
 *  - Changed commandline interface to use getopts:
 *
-* Modified January 2006 by Tuukka Karvonen <tkarvone@iki.fi> and 
+* Modified January 2006 by Tuukka Karvonen <tkarvone@iki.fi> and
 * Antti Haapakoski <antti.haapakoski@iki.fi>
 *  - Applied patches received from Ivan S. Dubrov
 *  - Disabled possible CRLF -> LFLF conversions in serial port initialization
 *  - Added minicom like serial port option setting if baud rate is configured.
-*    This was needed to get the options right on some platforms and to 
+*    This was needed to get the options right on some platforms and to
 *    wake up some modems.
 *  - Added possibility to pass PIN code for modem in initialization
 *   (Sometimes WebBox modems seem to hang if PIN is given on a virtual channel)
@@ -45,7 +45,7 @@
 * Modified March 2006 by Tuukka Karvonen <tkarvone@iki.fi>
 *  - Added -r option which makes the mux driver to restart itself in case
 *    the modem stops responding. This should make the driver more fault
-*    tolerant. 
+*    tolerant.
 *  - Some code restructuring that was required by the automatic restarting
 *  - buffer.c to use syslog instead of PDEBUG
 *  - fixed open_pty function to grant right for Unix98 scheme pseudo
@@ -131,10 +131,10 @@ static int *remaining;
 static int faultTolerant = 0;
 static int restart = 0;
 
-/* The following arrays must have equal length and the values must 
+/* The following arrays must have equal length and the values must
  * correspond.
  */
-static int baudrates[] = { 
+static int baudrates[] = {
     0, 9600, 19200, 38400, 57600, 115200, 230400, 460800 };
 
 static speed_t baud_bits[] = {
@@ -435,7 +435,7 @@ int ussp_send_data(unsigned char *buf, int n, int port)
 int findInBuf(char* buf, int len, char* needle) {
   int i;
   int needleMatchedPos=0;
-  
+
   if (needle[0] == '\0') {
     return 1;
   }
@@ -445,8 +445,8 @@ int findInBuf(char* buf, int len, char* needle) {
       needleMatchedPos++;
       if (needle[needleMatchedPos] == '\0') {
 	// Entire needle was found
-	return 1; 
-      }      
+	return 1;
+      }
     } else {
       needleMatchedPos=0;
     }
@@ -538,7 +538,7 @@ int open_pty(char* devname, int idx) {
 	char *symLinkName = createSymlinkName(idx);
 	if (fd != -1) {
 		if (symLinkName) {
-			char* ptsSlaveName = ptsname(fd);	  
+			char* ptsSlaveName = ptsname(fd);
 
 			// Create symbolic device name, e.g. /dev/mux0
 			unlink(symLinkName);
@@ -551,7 +551,7 @@ int open_pty(char* devname, int idx) {
 		// set raw input
 		options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 		options.c_iflag &= ~(INLCR | ICRNL | IGNCR);
-			
+
 		// set raw output
 		options.c_oflag &= ~OPOST;
 		options.c_oflag &= ~OLCUC;
@@ -559,11 +559,13 @@ int open_pty(char* devname, int idx) {
 		options.c_oflag &= ~ONOCR;
 		options.c_oflag &= ~OCRNL;
 		tcsetattr(fd, TCSANOW, &options);
- 
+
 		if (strcmp(devname, "/dev/ptmx") == 0) {
 			// Otherwise programs cannot access the pseudo terminals
 			grantpt(fd);
 			unlockpt(fd);
+			// set permissions 660
+			chmod(symLinkName, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 		}
 	}
 	free(symLinkName);
@@ -584,9 +586,9 @@ int indexOfBaud(int baudrate) {
     return 0;
 }
 
-/** 
+/**
  * Set serial port options. Then switch baudrate to zero for a while
- * and then back up. This is needed to get some modems 
+ * and then back up. This is needed to get some modems
  * (such as Siemens MC35i) to wake up.
  */
 void setAdvancedOptions(int fd, speed_t baud) {
@@ -594,52 +596,52 @@ void setAdvancedOptions(int fd, speed_t baud) {
     struct termios options_cpy;
 
     fcntl(fd, F_SETFL, 0);
-    
+
     // get the parameters
     tcgetattr(fd, &options);
-    
+
     // Do like minicom: set 0 in speed options
     cfsetispeed(&options, 0);
     cfsetospeed(&options, 0);
-    
+
     options.c_iflag = IGNBRK;
-    
+
     // Enable the receiver and set local mode and 8N1
     options.c_cflag = (CLOCAL | CREAD | CS8 | HUPCL);
     // enable hardware flow control (CNEW_RTCCTS)
     // options.c_cflag |= CRTSCTS;
     // Set speed
     options.c_cflag |= baud;
-    
+
     /*
       options.c_cflag &= ~PARENB;
       options.c_cflag &= ~CSTOPB;
       options.c_cflag &= ~CSIZE; // Could this be wrong!?!?!?
     */
-    
+
     // set raw input
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
     options.c_iflag &= ~(INLCR | ICRNL | IGNCR);
-    
+
     // set raw output
     options.c_oflag &= ~OPOST;
     options.c_oflag &= ~OLCUC;
     options.c_oflag &= ~ONLRET;
     options.c_oflag &= ~ONOCR;
     options.c_oflag &= ~OCRNL;
-    
+
     // Set the new options for the port...
     options_cpy = options;
     tcsetattr(fd, TCSANOW, &options);
     options = options_cpy;
-    
+
     // Do like minicom: set speed to 0 and back
     options.c_cflag &= ~baud;
     tcsetattr(fd, TCSANOW, &options);
     options = options_cpy;
-    
+
     sleep(1);
-    
+
     options.c_cflag |= baud;
     tcsetattr(fd, TCSANOW, &options);
 }
@@ -665,44 +667,44 @@ int open_serialport(char *dev)
 		if(_debug)
 			syslog(LOG_DEBUG, "serial opened\n" );
 		if (index > 0) {
-			// Switch the baud rate to zero and back up to wake up 
+			// Switch the baud rate to zero and back up to wake up
 			// the modem
 			setAdvancedOptions(fd, baud_bits[index]);
 		} else {
 			struct termios options;
 			// The old way. Let's not change baud settings
 			fcntl(fd, F_SETFL, 0);
-			
+
 			// get the parameters
 			tcgetattr(fd, &options);
-			
+
 			// Set the baud rates to 57600...
 			// cfsetispeed(&options, B57600);
 			// cfsetospeed(&options, B57600);
-			
+
 			// Enable the receiver and set local mode...
 			options.c_cflag |= (CLOCAL | CREAD);
-			
+
 			// No parity (8N1):
 			options.c_cflag &= ~PARENB;
 			options.c_cflag &= ~CSTOPB;
 			options.c_cflag &= ~CSIZE;
 			options.c_cflag |= CS8;
-			
+
 			// enable hardware flow control (CNEW_RTCCTS)
 			// options.c_cflag |= CRTSCTS;
-			
+
 			// set raw input
 			options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 			options.c_iflag &= ~(INLCR | ICRNL | IGNCR);
-			
+
 			// set raw output
 			options.c_oflag &= ~OPOST;
 			options.c_oflag &= ~OLCUC;
 			options.c_oflag &= ~ONLRET;
 			options.c_oflag &= ~ONOCR;
 			options.c_oflag &= ~OCRNL;
-			
+
 			// Set the new options for the port...
 			tcsetattr(fd, TCSANOW, &options);
 		}
@@ -1102,7 +1104,7 @@ int daemonize(int _debug)
                             wait(NULL);
 			    fprintf(stderr, "MUX startup failed. See syslog for details.\n");
                             exit(1);
-                        } 
+                        }
                         exit(0);//parent goes bye-bye
                     }
 		//child continues
@@ -1206,7 +1208,7 @@ int initSiemensMC35()
 		if(_debug)
 			syslog(LOG_DEBUG, "ERRO AT\\Q3 %d\r\n", __LINE__);
 	}
-        if (pin_code > 0 && pin_code < 10000) 
+        if (pin_code > 0 && pin_code < 10000)
         {
             // Some modems, such as webbox, will sometimes hang if SIM code
             // is given in virtual channel
@@ -1237,11 +1239,11 @@ int initIRZ52IT()
         // Setup the speed explicitly, if given
         sprintf(baud_command, "AT+IPR=%d\r\n", baudrate);
     }
-    
+
     at_command(serial_fd, baud_command, 10000);
     at_command(serial_fd,"AT\r\n", 10000);
     at_command(serial_fd,"AT&S0\\Q3\r\n", 10000);
-	
+
 	if (!at_command(serial_fd,"AT\r\n", 10000))
 	{
 		if(_debug)
@@ -1251,7 +1253,7 @@ int initIRZ52IT()
 		write_frame(0, close_mux, 2, UIH);
         at_command(serial_fd,"AT\r\n", 10000);
 	}
-        if (pin_code > 0 && pin_code < 10000) 
+        if (pin_code > 0 && pin_code < 10000)
         {
             // Some modems, such as webbox, will sometimes hang if SIM code
             // is given in virtual channel
@@ -1285,7 +1287,7 @@ int initGeneric()
         // Setup the speed explicitly, if given
         sprintf(mux_command, "AT+CMUX=0,0,%d\r\n", baud);
     }
-	
+
 	/**
 	 * Modem Init for Siemens Generic like Sony
 	 * that don't need initialization sequence like Siemens MC35
@@ -1299,7 +1301,7 @@ int initGeneric()
 		write_frame(0, close_mux, 2, UIH);
         at_command(serial_fd,"AT\r\n", 10000);
 	}
-        if (pin_code > 0 && pin_code < 10000) 
+        if (pin_code > 0 && pin_code < 10000)
         {
             // Some modems, such as webbox, will sometimes hang if SIM code
             // is given in virtual channel
@@ -1333,7 +1335,7 @@ int openDevicesAndMuxMode() {
 		{
 			syslog(LOG_ERR,"Can't open %s. %s (%d).\n", ptydev[i], strerror(errno), errno);
 			return -1;
-		} 
+		}
 		else if (ussp_fd[i] > maxfd)
 			maxfd = ussp_fd[i];
 		cstatus[i].opened = 0;
@@ -1341,7 +1343,7 @@ int openDevicesAndMuxMode() {
 	}
 	cstatus[i].opened = 0;
 	syslog(LOG_INFO,"Open serial port...\n");
-	
+
 	// open the serial port
 	if ((serial_fd = open_serialport(serportdev)) < 0)
 	{
@@ -1389,7 +1391,7 @@ int openDevicesAndMuxMode() {
 	return ret;
 }
 
-void closeDevices() 
+void closeDevices()
 {
 	int i;
 	close(serial_fd);
@@ -1506,12 +1508,12 @@ int main(int argc, char *argv[], char *env[])
 	programName = argv[0];
 	if(_debug)
 	{
-		openlog(programName, LOG_NDELAY | LOG_PID | LOG_PERROR  , LOG_LOCAL0);//pode ir até 7
+		openlog(programName, LOG_NDELAY | LOG_PID | LOG_PERROR  , LOG_LOCAL0);//pode ir atï¿½ 7
 		_priority = LOG_DEBUG;
 	}
 	else
 	{
-		openlog(programName, LOG_NDELAY | LOG_PID , LOG_LOCAL0 );//pode ir até 7
+		openlog(programName, LOG_NDELAY | LOG_PID , LOG_LOCAL0 );//pode ir atï¿½ 7
 		_priority = LOG_INFO;
 	}
 
@@ -1544,7 +1546,7 @@ int main(int argc, char *argv[], char *env[])
 	}
 
 	if(_debug) {
-		syslog(LOG_INFO, 
+		syslog(LOG_INFO,
 			   "You can quit the MUX daemon with SIGKILL or SIGTERM\n");
 	} else if (wait_for_daemon_status) {
 		kill(parent_pid, SIGHUP);
@@ -1608,7 +1610,7 @@ int main(int argc, char *argv[], char *env[])
 						syslog(LOG_DEBUG,"Data from ptya%d: %d bytes\n",i,len);
 					if(len<0)
 					{
-                                                // Re-open pty, so that in 
+                                                // Re-open pty, so that in
 						remaining[i] = 0;
 						close(ussp_fd[i]);
 						if ((ussp_fd[i] = open_pty(ptydev[i], i)) < 0)
@@ -1670,8 +1672,8 @@ int main(int argc, char *argv[], char *env[])
 					}
 					sleep(POLLING_INTERVAL);
 				} while (!terminate);
-				
-			} else if (frameReceiveTime + POLLING_INTERVAL*pingNumber < 
+
+			} else if (frameReceiveTime + POLLING_INTERVAL*pingNumber <
 					   currentTime) {
 				// Nothing has been received for a while -> test the modem
 				if (_debug) {
